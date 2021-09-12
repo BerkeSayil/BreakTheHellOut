@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
+using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
 {
@@ -18,7 +20,7 @@ public class PlayerController : MonoBehaviour
 
     Vector3 velocity;
     bool isGrounded;
-
+    [SerializeField] GameObject lazerTouched;
     //wallrunnning
     [SerializeField] Transform leftCheck, rightCheck;
     [SerializeField] LayerMask wallMask;
@@ -57,7 +59,7 @@ public class PlayerController : MonoBehaviour
         WallSlideInput();
 
         controller.Move(move * speed * Time.deltaTime);
-
+        
         //jump
         if (Input.GetButtonDown("Jump") && isGrounded)
         {
@@ -68,6 +70,11 @@ public class PlayerController : MonoBehaviour
 
         controller.Move(velocity * Time.deltaTime);
 
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            Scene scene = SceneManager.GetActiveScene();
+            SceneManager.LoadScene(scene.buildIndex);
+        }
 
     }
 
@@ -109,6 +116,15 @@ public class PlayerController : MonoBehaviour
             gravity = -19.62f;
         }
 
+    }
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.CompareTag("Lazer"))
+        {
+            lazerTouched.SetActive(true);
+            Scene scene = SceneManager.GetActiveScene(); 
+            SceneManager.LoadScene(scene.buildIndex);
+        }
     }
 
 }

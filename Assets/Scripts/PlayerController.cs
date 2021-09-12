@@ -6,7 +6,7 @@ public class PlayerController : MonoBehaviour
 {
     [SerializeField] CharacterController controller;
     [SerializeField] float speed = 18f;
-    [SerializeField] float gravity = -9.81f;
+    float gravity = -19.62f;
     [SerializeField] Transform groundCheck;
     [SerializeField] float groundDistance = 0.4f;
     [SerializeField] float jumpHeight = 3f;
@@ -20,17 +20,19 @@ public class PlayerController : MonoBehaviour
     bool isGrounded;
 
     //wallrunnning
+    [SerializeField] Transform leftCheck, rightCheck;
     [SerializeField] LayerMask wallMask;
-    [SerializeField] float wallRunSpeed, maxWallRunTime;
+    [SerializeField] float wallSlideSpeed;
     bool isWallRight, isWallLeft;
-    bool isWallRunnning;
-    [SerializeField] float wallRunCameraTilt;
+    
 
+    Vector3 move;
 
     private void Update()
     {
         isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
 
+        //stick ground
         if(isGrounded && velocity.y < 0)
         {
             velocity.y = -2f;
@@ -39,7 +41,7 @@ public class PlayerController : MonoBehaviour
         float x = Input.GetAxis("Horizontal");
         float y = Input.GetAxis("Vertical");
 
-        Vector3 move = transform.right * x  + transform.forward * y;
+        move = transform.right * x  + transform.forward * y;
 
         //dashing
         if (Input.GetButtonDown("Fire3"))
@@ -47,39 +49,65 @@ public class PlayerController : MonoBehaviour
             move += transform.forward * dashSpeed;
             dashWind.Play();
         }
+        // delta y = 1/2 g t^2 timeDeltaTime 
+        velocity.y += gravity * Time.deltaTime;
+
         //wallrun
         CheckForWall();
-        WallRunInput();
+        WallSlideInput();
 
         controller.Move(move * speed * Time.deltaTime);
 
-        if(Input.GetButtonDown("Jump") && isGrounded)
+        //jump
+        if (Input.GetButtonDown("Jump") && isGrounded)
         {
             velocity.y = Mathf.Sqrt(jumpHeight * -2 * gravity);
         }
 
-        // delta y = 1/2 g t^2 timeDeltaTime squared
-        velocity.y += gravity * Time.deltaTime;
+        
+
         controller.Move(velocity * Time.deltaTime);
 
 
     }
 
 
-    private void WallRunInput()
+    private void WallSlideInput()
     {
-
+        if(Input.GetKey(KeyCode.A) && isWallLeft)
+        {
+            WallSlide();
+        }
+        if (Input.GetKey(KeyCode.D) && isWallRight)
+        {
+            WallSlide();
+        }
     }
-    private void StartWallRun()
+    private void WallSlide()
     {
+        velocity.y = 0;
+        gravity = 0f;
 
-    }
-    private void StopWallRun()
-    {
+        //make player stick to wall
+        if (isWallLeft)
+        {
+            move += transform.right * wallSlideSpeed * -1;
+        }
+        if(isWallRight)
+        {
+            move += transform.right * wallSlideSpeed;
+        }
 
     }
     private void CheckForWall()
     {
+        isWallLeft = Physics.CheckSphere(leftCheck.position, groundDistance, wallMask);
+        isWallRight = Physics.CheckSphere(rightCheck.position, groundDistance, wallMask);
+
+        if(!isWallLeft && !isWallRight)
+        {
+            gravity = -19.62f;
+        }
 
     }
 

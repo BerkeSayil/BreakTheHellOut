@@ -4,55 +4,83 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    [SerializeField] float speed = 5f;
-    [SerializeField] float jumpSpeed = 200f;
-    CharacterController controller;
+    [SerializeField] CharacterController controller;
+    [SerializeField] float speed = 18f;
+    [SerializeField] float gravity = -9.81f;
+    [SerializeField] Transform groundCheck;
+    [SerializeField] float groundDistance = 0.4f;
+    [SerializeField] float jumpHeight = 3f;
+    
+    [SerializeField] float dashSpeed = 50f;
+    [SerializeField] ParticleSystem dashWind;
 
-    [SerializeField] float lookSpeed = 3;
-    private Vector2 rotation = Vector2.zero;
+    [SerializeField]LayerMask groundMask;
 
-    Vector3 playerVelocity;
+    Vector3 velocity;
+    bool isGrounded;
 
-    private void Start()
-    {
-        controller = gameObject.GetComponent<CharacterController>();
-    }
+    //wallrunnning
+    [SerializeField] LayerMask wallMask;
+    [SerializeField] float wallRunSpeed, maxWallRunTime;
+    bool isWallRight, isWallLeft;
+    bool isWallRunnning;
+    [SerializeField] float wallRunCameraTilt;
 
-
-    private void FixedUpdate()
-    {
-        //forward backward move
-        Vector3 vertical = transform.TransformDirection(Vector3.forward);
-        float currentSpeedV = speed * Input.GetAxis("Vertical");
-        controller.Move(vertical * currentSpeedV * Time.deltaTime);
-
-        //left right walk
-        Vector3 horizontal = transform.TransformDirection(Vector3.right);
-        float currentSpeedH = speed * Input.GetAxis("Horizontal");
-
-        controller.Move(horizontal * currentSpeedH * Time.deltaTime);
-
-
-    }
 
     private void Update()
     {
-        
-        Look();
-        
+        isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+
+        if(isGrounded && velocity.y < 0)
+        {
+            velocity.y = -2f;
+        }
+
+        float x = Input.GetAxis("Horizontal");
+        float y = Input.GetAxis("Vertical");
+
+        Vector3 move = transform.right * x  + transform.forward * y;
+
+        //dashing
+        if (Input.GetButtonDown("Fire3"))
+        {
+            move += transform.forward * dashSpeed;
+            dashWind.Play();
+        }
+        //wallrun
+        CheckForWall();
+        WallRunInput();
+
+        controller.Move(move * speed * Time.deltaTime);
+
+        if(Input.GetButtonDown("Jump") && isGrounded)
+        {
+            velocity.y = Mathf.Sqrt(jumpHeight * -2 * gravity);
+        }
+
+        // delta y = 1/2 g t^2 timeDeltaTime squared
+        velocity.y += gravity * Time.deltaTime;
+        controller.Move(velocity * Time.deltaTime);
 
 
     }
 
-    private void Look() // Look rotation (UP down is Camera) (Left right is Transform rotation)
+
+    private void WallRunInput()
     {
-        Cursor.visible = false;
-        rotation.y += Input.GetAxis("Mouse X");
-        rotation.x += -Input.GetAxis("Mouse Y");
-        rotation.x = Mathf.Clamp(rotation.x, -15f, 15f);
-        transform.eulerAngles = new Vector2(0, rotation.y) * lookSpeed;
-        Camera.main.transform.localRotation = Quaternion.Euler(rotation.x * lookSpeed, 0, 0);
+
+    }
+    private void StartWallRun()
+    {
+
+    }
+    private void StopWallRun()
+    {
+
+    }
+    private void CheckForWall()
+    {
+
     }
 
-    
 }
